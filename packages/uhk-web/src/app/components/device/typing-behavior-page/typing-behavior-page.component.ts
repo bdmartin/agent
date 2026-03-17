@@ -34,6 +34,9 @@ export class TypingBehaviorPage implements OnInit, OnDestroy {
 
     doubletapTimeout = 400;
     keystrokeDelay = 0;
+    keystrokeAnonymization = false;
+    keystrokeAnonymizationMinDelay = 20;
+    keystrokeAnonymizationMaxDelay = 100;
 
     private userConfigSubscription: Subscription;
 
@@ -53,6 +56,9 @@ export class TypingBehaviorPage implements OnInit, OnDestroy {
 
                 this.doubletapTimeout = config.doubletapTimeout;
                 this.keystrokeDelay = config.keystrokeDelay;
+                this.keystrokeAnonymization = config.keystrokeAnonymization;
+                this.keystrokeAnonymizationMinDelay = config.keystrokeAnonymizationMinDelay;
+                this.keystrokeAnonymizationMaxDelay = config.keystrokeAnonymizationMaxDelay;
 
                 this.cdRef.detectChanges();
             });

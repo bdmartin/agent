@@ -153,6 +153,12 @@ export class UserConfiguration implements MouseSpeedConfiguration {
 
     @assertUInt16 keystrokeDelay: number;
 
+    keystrokeAnonymization: boolean;
+
+    @assertUInt16 keystrokeAnonymizationMinDelay: number;
+
+    @assertUInt16 keystrokeAnonymizationMaxDelay: number;
+
     hostConnections: HostConnection[] = [];
 
     moduleConfigurations: ModuleConfiguration[] = [];
@@ -228,6 +234,7 @@ export class UserConfiguration implements MouseSpeedConfiguration {
         this.migrateToV12();
         this.migrateToV12_1();
         this.migrateToV13();
+        this.migrateToV13_1();
 
         this.recalculateConfigurationLength();
 
@@ -332,6 +339,10 @@ export class UserConfiguration implements MouseSpeedConfiguration {
             this.userConfigurationLength = 0;
         }
 
+        if (this.migrateToV13_1()) {
+            this.userConfigurationLength = 0;
+        }
+
         if (this.userConfigurationLength === 0) {
             this.recalculateConfigurationLength();
         }
@@ -381,6 +392,9 @@ export class UserConfiguration implements MouseSpeedConfiguration {
             diagonalSpeedCompensation: this.diagonalSpeedCompensation,
             doubletapTimeout: this.doubletapTimeout,
             keystrokeDelay: this.keystrokeDelay,
+            keystrokeAnonymization: this.keystrokeAnonymization,
+            keystrokeAnonymizationMinDelay: this.keystrokeAnonymizationMinDelay,
+            keystrokeAnonymizationMaxDelay: this.keystrokeAnonymizationMaxDelay,
 
             displayBrightness: this.displayBrightness,
             displayBrightnessBattery: this.displayBrightnessBattery,
@@ -454,6 +468,10 @@ export class UserConfiguration implements MouseSpeedConfiguration {
 
         buffer.writeUInt8(this.keyBacklightBrightnessChargingDefault);
         buffer.writeUInt8(this.batteryChargingMode);
+
+        buffer.writeBoolean(this.keystrokeAnonymization);
+        buffer.writeUInt16(this.keystrokeAnonymizationMinDelay);
+        buffer.writeUInt16(this.keystrokeAnonymizationMaxDelay);
 
         for(let i = 0; i < HOST_CONNECTION_COUNT_MAX; i++) {
             const hostConnection = this.hostConnections[i];
@@ -793,6 +811,12 @@ export class UserConfiguration implements MouseSpeedConfiguration {
             this.batteryChargingMode = buffer.readUInt8();
         }
 
+        if (isSerialisationInfoGte(serialisationInfo, '13.1.0')) {
+            this.keystrokeAnonymization = buffer.readBoolean();
+            this.keystrokeAnonymizationMinDelay = buffer.readUInt16();
+            this.keystrokeAnonymizationMaxDelay = buffer.readUInt16();
+        }
+
         this.hostConnections = [];
         for (let i = 0; i < HOST_CONNECTION_COUNT_MAX; i++) {
             const hostConnection = new HostConnection().fromBinary(buffer, serialisationInfo);
@@ -934,6 +958,12 @@ export class UserConfiguration implements MouseSpeedConfiguration {
         this.doubletapTimeout = jsonObject.doubletapTimeout;
         this.keystrokeDelay = jsonObject.keystrokeDelay;
 
+        if (isSerialisationInfoGte(this.getSerialisationInfo(), '13.1.0')) {
+            this.keystrokeAnonymization = jsonObject.keystrokeAnonymization;
+            this.keystrokeAnonymizationMinDelay = jsonObject.keystrokeAnonymizationMinDelay;
+            this.keystrokeAnonymizationMaxDelay = jsonObject.keystrokeAnonymizationMaxDelay;
+        }
+
         const serialisationInfo = this.getSerialisationInfo();
         this.moduleConfigurations = jsonObject.moduleConfigurations.map((moduleConfiguration: any) => {
             return new ModuleConfiguration().fromJsonObject(moduleConfiguration, serialisationInfo);
@@ -985,6 +1015,12 @@ export class UserConfiguration implements MouseSpeedConfiguration {
         this.diagonalSpeedCompensation = jsonObject.diagonalSpeedCompensation;
         this.doubletapTimeout = jsonObject.doubletapTimeout;
         this.keystrokeDelay = jsonObject.keystrokeDelay;
+
+        if (isSerialisationInfoGte(this.getSerialisationInfo(), '13.1.0')) {
+            this.keystrokeAnonymization = jsonObject.keystrokeAnonymization;
+            this.keystrokeAnonymizationMinDelay = jsonObject.keystrokeAnonymizationMinDelay;
+            this.keystrokeAnonymizationMaxDelay = jsonObject.keystrokeAnonymizationMaxDelay;
+        }
 
         this.displayBrightness = jsonObject.displayBrightness;
         this.displayBrightnessBattery = jsonObject.displayBrightnessBattery;
@@ -1074,6 +1110,12 @@ export class UserConfiguration implements MouseSpeedConfiguration {
             this.batteryChargingMode = BatteryChargingMode[jsonObject.batteryChargingMode as string];
         }
 
+        if (isSerialisationInfoGte(serialisationInfo, '13.1.0')) {
+            this.keystrokeAnonymization = jsonObject.keystrokeAnonymization;
+            this.keystrokeAnonymizationMinDelay = jsonObject.keystrokeAnonymizationMinDelay;
+            this.keystrokeAnonymizationMaxDelay = jsonObject.keystrokeAnonymizationMaxDelay;
+        }
+
         this.hostConnections = jsonObject.hostConnections.map((hostConnection: any, index: number) => {
             const connection = new HostConnection().fromJsonObject(hostConnection, serialisationInfo);
             connection.index = index;
@@ -1153,6 +1195,9 @@ export class UserConfiguration implements MouseSpeedConfiguration {
         this.diagonalSpeedCompensation = false;
         this.doubletapTimeout = 400;
         this.keystrokeDelay = 0;
+        this.keystrokeAnonymization = false;
+        this.keystrokeAnonymizationMinDelay = 20;
+        this.keystrokeAnonymizationMaxDelay = 100;
 
         this.moduleConfigurations.push(
             defaultKeyClusterLeftModuleConfig(),
@@ -1421,6 +1466,20 @@ export class UserConfiguration implements MouseSpeedConfiguration {
         // We don't know it. We will update it before save user config to the keyboard
         this.lastSaveAgentTag = '';
         this.lastSaveFirmwareTag = '';
+    }
+
+    private migrateToV13_1(): boolean {
+        if (isSerialisationInfoGte(this.getSerialisationInfo(), '13.1.0')) {
+            return false;
+        }
+
+        this.userConfigMinorVersion = 1;
+        this.userConfigPatchVersion = 0;
+        this.keystrokeAnonymization = false;
+        this.keystrokeAnonymizationMinDelay = 20;
+        this.keystrokeAnonymizationMaxDelay = 100;
+
+        return true;
     }
 
     private getSerialisationInfo(): SerialisationInfo {

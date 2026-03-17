@@ -210,6 +210,50 @@
                     />
                 </td>
             </tr>
+            <tr class="separator">
+                <td>Keystroke anonymization
+                    <circle-tooltip [tooltip]="keystrokeAnonymizationTooltip"
+                                    width="380"/>
+                    <ng-template #keystrokeAnonymizationTooltip>
+                        <p>Adds a random delay to each USB report to obscure your typing rhythm, making it resistant to keystroke fingerprinting.</p>
+                        The random delay is additive with the keystroke delay. Higher values provide stronger anonymization but add more perceived latency.
+                    </ng-template>
+                </td>
+                <td>
+                    <input type="checkbox"
+                        [(ngModel)]="keystrokeAnonymization"
+                        (ngModelChange)="onSetPropertyValue('keystrokeAnonymization', $event)"
+                    />
+                </td>
+            </tr>
+            <tr class="separator">
+                <td>Keystroke anonymization min delay</td>
+                <td>
+                    <slider-wrapper
+                        [min]="0"
+                        [max]="300"
+                        [step]="5"
+                        valueUnit="ms"
+                        [disabled]="!keystrokeAnonymization"
+                        [(ngModel)]="keystrokeAnonymizationMinDelay"
+                        (ngModelChange)="onSetPropertyValue('keystrokeAnonymizationMinDelay', $event)"
+                    />
+                </td>
+            </tr>
+            <tr class="separator">
+                <td>Keystroke anonymization max delay</td>
+                <td>
+                    <slider-wrapper
+                        [min]="0"
+                        [max]="300"
+                        [step]="5"
+                        valueUnit="ms"
+                        [disabled]="!keystrokeAnonymization"
+                        [(ngModel)]="keystrokeAnonymizationMaxDelay"
+                        (ngModelChange)="onSetPropertyValue('keystrokeAnonymizationMaxDelay', $event)"
+                    />
+                </td>
+            </tr>
 
             </tbody>
         </table>
